@@ -1,0 +1,31 @@
+sudo: true 
+dist: trusty
+group: travis_latest
+language: java
+
+env:
+  global:
+    - ARTIFACTS_MAIN_DIR=output
+    - REPO_NAME=${TRAVIS_REPO_SLUG##*\/}
+    - ARTIFACTS_PATH="${ARTIFACTS_MAIN_DIR}/${REPO_NAME}/${TRAVIS_TAG:-$TRAVIS_BRANCH}"
+    - BUCKET_NAME=bp-generic-local
+
+jobs:
+  include:
+    - stage: build-deploy-docker
+      if: type == push
+      before_script:
+        - escape() { echo $1 | sed -e "s/\//-/g"; } # replace / with -
+      script:
+        - mvn clean package -Dcheckstyle.skip=true -Dmaven.test.skip=true
+        # set docker TAG: if $TRAVIS_TAG then TAG = $TRAVIS_TAG, else TAG = branch-$TRAVIS_BRANCH.
+        # trimmed to 128 chars
+        # replace branch-master with latest
+        - TAG=$(echo ${TRAVIS_TAG:-branch-$(escape $TRAVIS_BRANCH)} | cut -c -128 | sed 's/branch-master$/latest/')
+        - echo "Building ${TRAVIS_JOB_NAME}:${TAG}"
+      deploy:
+        - provider: script
+          script: curl -u ${ARTIFACTORY_USER}:${ARTIFACTORY_PASS} -T target/components/packages/confluentinc-kafka-connect-elasticsearch-11.0.4.zip ${ARTIFACTORY_URL}/artifactory/${BUCKET_NAME}/confluentinc-kafka-connect-elasticsearch-11.0.4--${TAG}.zip
+          skip_cleanup: true
+          on:
+            all_branches: true

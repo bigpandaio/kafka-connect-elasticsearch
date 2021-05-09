@@ -192,7 +192,7 @@ public class DataConverter {
     try {
       return new ObjectMapper().readValue(rawJson, new TypeReference<Map<String,Object>>() {});
     } catch (JsonProcessingException e) {
-        e.printStackTrace();
+      e.printStackTrace();
       return Collections.emptyMap();
     }
   }
