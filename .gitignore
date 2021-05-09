@@ -1,5 +1,9 @@
 target
 docs/_build
+/bin
 .idea
 *.iml
 *.DS_Store
+.settings/
+.project
+.classpath
